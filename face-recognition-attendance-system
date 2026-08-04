@@ -1,0 +1,94 @@
+import org.opencv.core.*;
+import org.opencv.videoio.VideoCapture;
+import org.opencv.imgproc.Imgproc;
+import org.opencv.objdetect.CascadeClassifier;
+
+import java.io.FileWriter;
+import java.time.LocalDateTime;
+
+public class FaceRecognitionAttendance {
+
+    public static void main(String[] args) {
+
+        // Load OpenCV library
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+
+        // Load face detection model
+        CascadeClassifier faceDetector =
+                new CascadeClassifier("haarcascade_frontalface_default.xml");
+
+        // Open webcam
+        VideoCapture camera = new VideoCapture(0);
+
+        if (!camera.isOpened()) {
+            System.out.println("Camera not found!");
+            return;
+        }
+
+        Mat frame = new Mat();
+
+        System.out.println("Face Recognition Attendance Started...");
+
+        while (true) {
+
+            camera.read(frame);
+
+            if (!frame.empty()) {
+
+                Mat grayFrame = new Mat();
+
+                // Convert image to grayscale
+                Imgproc.cvtColor(
+                        frame,
+                        grayFrame,
+                        Imgproc.COLOR_BGR2GRAY
+                );
+
+                // Detect faces
+                MatOfRect faces = new MatOfRect();
+
+                faceDetector.detectMultiScale(
+                        grayFrame,
+                        faces
+                );
+
+                if (faces.toArray().length > 0) {
+
+                    System.out.println("Face Detected!");
+
+                    markAttendance("Student");
+
+                    break;
+                }
+            }
+        }
+
+        camera.release();
+
+        System.out.println("Attendance Marked Successfully!");
+    }
+
+
+    public static void markAttendance(String name) {
+
+        try {
+
+            FileWriter file =
+                    new FileWriter("attendance.csv", true);
+
+            file.write(
+                name + "," +
+                LocalDateTime.now() +
+                "\n"
+            );
+
+            file.close();
+
+        } catch (Exception e) {
+
+            System.out.println(
+                "Error saving attendance"
+            );
+        }
+    }
+}
